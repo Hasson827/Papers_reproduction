@@ -10,8 +10,6 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 from PIL import Image
 
-
-
 #2. 定义最基本的分类训练模型
 def train_cluster(train_iter,model,loss_fn,optimizer,device):
     model = model.to(device)
