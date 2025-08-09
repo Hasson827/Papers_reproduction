@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-
 def extract(v, t, x_shape):
     """
     Extract some coefficients at specified timesteps, then reshape to
@@ -17,11 +16,11 @@ class GaussianDiffusionTrainer(nn.Module):
         super().__init__()
         self.model = model
         self.T = T
-        
-        self.register_buffer('betas', torch.linspace(beta_1, beta_T, T).double())
+
+        self.register_buffer('betas', torch.linspace(beta_1, beta_T, T).float())
         alphas = 1. - self.betas
         alphas_bar = torch.cumprod(alphas, dim=0)
-        
+
         self.register_buffer('sqrt_alphas_bar', torch.sqrt(alphas_bar))
         self.register_buffer('sqrt_one_minus_alphas_bar', torch.sqrt(1. - alphas_bar))
     
@@ -44,12 +43,12 @@ class GaussianDiffusionSampler(nn.Module):
         super().__init__()
         self.model = model
         self.T = T
-        
-        self.register_buffer('betas', torch.linspace(beta_1, beta_T, T).double())
+
+        self.register_buffer('betas', torch.linspace(beta_1, beta_T, T).float())
         alphas = 1. - self.betas
         alphas_bar = torch.cumprod(alphas, dim=0)
         alphas_bar_prev = F.pad(alphas_bar, [1, 0], value=1)[:T]
-        
+
         self.register_buffer('coeff1', torch.sqrt(1. / alphas))
         self.register_buffer('coeff2', self.coeff1 * (1. - alphas) / torch.sqrt(1. - alphas_bar))
         self.register_buffer('posterior_var', self.betas * (1. - alphas_bar_prev) / (1. - alphas_bar))
@@ -86,5 +85,5 @@ class GaussianDiffusionSampler(nn.Module):
                 x_t = mean
             assert torch.isnan(x_t).int().sum() == 0, "nan in tensor"
         x_0 = x_t
-        return torch.clip(x_0, -1., 1.)
+        return x_0
     
