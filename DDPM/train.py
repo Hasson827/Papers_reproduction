@@ -18,7 +18,7 @@ def get_dataloader(batch_size=32, image_size=32):
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # 归一化到[-1, 1]
     ])
     
-    dataset = datasets.CIFAR10(
+    dataset = datasets.MNIST(
         root='./data',
         train=True,
         download=True,
