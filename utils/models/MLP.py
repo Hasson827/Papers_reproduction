@@ -17,6 +17,13 @@ class MLP(nn.Module):
         self.channels_t = channels_t
         self.in_projection = nn.Linear(channels_data, channels)
         self.t_projection = nn.Linear(channels_t, channels)
+        self.r_projection = nn.Linear(channels_t, channels)
+        # learnable time embedding MLP
+        self.time_mlp = nn.Sequential(
+            nn.Linear(channels_t, channels_t * 4),
+            nn.GELU(),
+            nn.Linear(channels_t * 4, channels_t),
+        )
         self.blocks = nn.Sequential(*[Block(channels) for _ in range(layers)])
         self.out_projection = nn.Linear(channels, channels_data)
 
@@ -29,13 +36,26 @@ class MLP(nn.Module):
         emb = torch.cat([emb.sin(), emb.cos()], dim=-1)
         if self.channels_t % 2 == 1:
             emb = nn.functional.pad(emb, (0, 1), mode='constant')
+        # apply learnable embedding MLP
+        emb = self.time_mlp(emb)
         return emb
     
-    def forward(self, x: Tensor, t: Tensor) -> Tensor:
+    # def forward(self, x: Tensor, t: Tensor) -> Tensor:
+    #     x = self.in_projection(x)
+    #     t = self.gen_t_embedding(t)
+    #     t = self.t_projection(t)
+    #     x = x + t
+    #     x = self.blocks(x)
+    #     x = self.out_projection(x)
+    #     return x
+
+    def forward(self, x: Tensor, t: Tensor, r: Tensor) -> Tensor:
         x = self.in_projection(x)
         t = self.gen_t_embedding(t)
         t = self.t_projection(t)
-        x = x + t
+        r = self.gen_t_embedding(r)
+        r = self.r_projection(r)
+        x = x + t + r
         x = self.blocks(x)
         x = self.out_projection(x)
         return x

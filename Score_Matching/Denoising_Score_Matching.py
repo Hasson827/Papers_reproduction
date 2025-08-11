@@ -103,7 +103,7 @@ if __name__ == "__main__":
     data = torch.Tensor(original_data).to(device)
 
     # 创建模型
-    model = MLP(channels_data=2, layers=5, channels=512).to(device)  # 输出维度为2，因为score是向量
+    model = MLP(channels_data=2, layers=5, channels=512).to(device)
     optim = torch.optim.AdamW(model.parameters(), lr=1e-3)
     
     # 训练参数
@@ -117,4 +117,4 @@ if __name__ == "__main__":
                                      batch_size=200, steps_per_level=200)
     
     visualization(original_data=original_data, generated_data=samples, 
-                 losses=losses, model_name="Score Matching")
+                 losses=losses, model_name="Denoising Score Matching")
