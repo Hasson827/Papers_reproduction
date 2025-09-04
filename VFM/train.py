@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import generate_original_distribution, visualization
 
 
-def train_vfm(model, device, optimizer, data, n_epochs=20000, batch_size=2048):
+def train_vfm(model, device, optimizer, data, n_epochs=100000, batch_size=10000):
     """训练VFM模型"""
     losses = []
     
@@ -29,21 +29,11 @@ def train_vfm(model, device, optimizer, data, n_epochs=20000, batch_size=2048):
         mu = model(x, t)
         
         # VFM目标函数: -E[log q_θ(x1|x)]
-        # 对于高斯分布，log q_θ(x1|x) = -1/2 * [(x1-mu)^2/var + log(var) + log(2π)]
-        loss = F.mse_loss(x1, mu)
+        diff = t.detach() * (x1 - mu) ** 2
+        loss = torch.mean(diff)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-        losses.append(loss.item())
-        
-        if epoch % 1000 == 0:
-            print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
-    
-    return losses
 
-def sample_vfm(model, n_samples=10000, n_steps=50, device='cuda'):
+def sample_vfm(model, n_samples=20000, n_steps=10, device='cuda'):
     """使用训练好的VFM模型生成样本"""
     # 从初始分布p0采样 (标准正态分布)
     x = torch.randn(n_samples, 2).to(device)
@@ -70,15 +60,21 @@ if __name__ == "__main__":
     print(f"使用设备: {device}")
     
     # 生成原始数据分布
-    original_data = generate_original_distribution(N=10000, distribution_type="checkerboard")
+    original_data = generate_original_distribution(N=20000, distribution_type="checkerboard")
     data = torch.Tensor(original_data).to(device)
 
-    model = VFMContinuousModel(hidden_dim=512).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=3e-5)
+    model = VFMContinuousModel(hidden_dim=1024).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 
     # 训练模型
     losses = train_vfm(model, device, optimizer, data)
 
     # 生成样本
-    samples = sample_vfm(model)
-    visualization(original_data=original_data, generated_data=samples, losses=losses, model_name="Variational Flow Matching")
+    samples_1 = sample_vfm(model, n_steps=1)
+    samples_2 = sample_vfm(model, n_steps=2)
+    samples_4 = sample_vfm(model, n_steps=4)
+    samples_8 = sample_vfm(model, n_steps=8)
+    visualization(original_data=original_data, generated_data=samples_1, losses=losses, model_name="Variational Flow Matching 1")
+    visualization(original_data=original_data, generated_data=samples_2, losses=losses, model_name="Variational Flow Matching 2")
+    visualization(original_data=original_data, generated_data=samples_4, losses=losses, model_name="Variational Flow Matching 4")
+    visualization(original_data=original_data, generated_data=samples_8, losses=losses, model_name="Variational Flow Matching 8")
