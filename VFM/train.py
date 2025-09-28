@@ -29,9 +29,18 @@ def train_vfm(model, device, optimizer, data, n_epochs=100000, batch_size=10000)
         mu = model(x, t)
         
         # VFM目标函数: -E[log q_θ(x1|x)]
-        diff = t.detach() * (x1 - mu) ** 2
+        diff = (x1 - mu) ** 2
         loss = torch.mean(diff)
-
+        losses.append(loss.item())
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        if epoch % 1000 == 0:
+            print(f"Epoch [{epoch}/{n_epochs}], Loss: {loss.item():.4f}")
+    
+    return losses
 
 def sample_vfm(model, n_samples=20000, n_steps=10, device='cuda'):
     """使用训练好的VFM模型生成样本"""

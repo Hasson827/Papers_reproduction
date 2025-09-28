@@ -9,11 +9,11 @@ class VFMContinuousModel(nn.Module):
         # 神经网络预测最终分布的均值和方差
         self.net = nn.Sequential(
             nn.Linear(input_dim + 1, hidden_dim),  # +1 for time t
-            nn.ReLU(),
+            nn.SiLU(),
             nn.Linear(hidden_dim, hidden_dim * 2),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.Linear(hidden_dim * 2, hidden_dim), 
-            nn.ReLU(), 
+            nn.SiLU(), 
             nn.Linear(hidden_dim, input_dim)  # 输出均值
         )
     
